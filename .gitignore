@@ -1,0 +1,8 @@
+output/
+*.flac
+*.wav
+*.mp3
+*.egg-info/
+__pycache__/
+*.pyc
+.venv/
