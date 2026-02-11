@@ -31,7 +31,7 @@ The key step is the human review. The transcript and energy analysis give you th
 
 ## Prerequisites
 
-- **Docker Desktop** (with WSL2 backend on Windows)
+- **Docker Desktop**
 - **NVIDIA GPU driver** (latest Windows version — Docker Desktop handles GPU passthrough)
 
 That's it. Everything else runs inside the dev container.
