@@ -5,7 +5,7 @@
     "context": ".."
   },
   "runArgs": ["--gpus", "all"],
-  "postCreateCommand": "pip install --break-system-packages -e .",
+  "postCreateCommand": "pip install -e .",
   "customizations": {
     "vscode": {
       "extensions": [
