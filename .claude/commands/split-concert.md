@@ -1,4 +1,4 @@
-You are helping the user split a bootleg concert recording into individual tracks. This is a collaborative, taste-based process — the user knows the music and has opinions about where songs start and end. Your job is to do the grunt work (downloading, transcribing, analyzing) and then work together with the user to decide on the cuts.
+You are helping the user split a bootleg concert recording into individual tracks. This is a collaborative, taste-based process — the user knows the music and has opinions about where songs start and end. Your job is to do the grunt work, make a best-guess first cut, and then iterate with the user until the splits feel right.
 
 The YouTube URL is: $ARGUMENTS
 
@@ -17,41 +17,17 @@ concert-split transcribe --input output/concert/concert.flac
 concert-split analyze --input output/concert/concert.flac
 ```
 
-## Step 3: Collaborate on splits
+## Step 3: First-pass split
 
-Once transcription and analysis are done, read both files:
+Once transcription and analysis are done, read all three files:
 - `output/concert/transcript.txt`
 - `output/concert/energy.txt`
+- `output/concert/description.txt`
 
-Also check `output/concert/description.txt` — the video description sometimes has useful info.
+Ask the user for any context that helps: Do they have a setlist? Know the artist/date/venue? If not, do your best from transcript lyrics and video description.
 
-Now work WITH the user:
-1. Share what you see — summarize the transcript, note where you think songs change based on banter, applause, energy dips, lyric content, etc.
-2. Ask the user if they have a setlist (from setlist.fm or memory). If so, use it to match songs to segments.
-3. If no setlist, propose song identifications based on lyrics you can pick out from the transcript. The user will know better than you — defer to them.
-4. Walk through each proposed boundary together. The user may want to adjust cuts earlier or later based on how they want transitions to feel — some people want clean silence between tracks, others want to keep the crowd noise rolling into the next song. Ask about their preference.
-5. Confirm the final track list with the user before writing anything.
+Using the transcript, energy dips, and any setlist info, make your best guess at the full track list with split points. Write `output/concert/splits.json` and immediately run the split:
 
-## Step 4: Write splits.json
-
-Once the user approves the track list, write `output/concert/splits.json`:
-```json
-{
-  "artist": "...",
-  "date": "...",
-  "venue": "...",
-  "tracks": [
-    {"track": 1, "title": "...", "start": "M:SS.mmm", "end": "M:SS.mmm"},
-    ...
-  ]
-}
-```
-
-Ask the user for artist, date, and venue if you don't already know.
-
-## Step 5: Split
-
-Run the split command with metadata from the user:
 ```
 concert-split split \
   --input output/concert/concert.flac \
@@ -61,4 +37,27 @@ concert-split split \
   --year ...
 ```
 
-Let the user know where the finished tracks are and how many were created.
+Tell the user the tracks are ready to listen to in `output/concert/tracks/`. Show them the track list with timestamps so they can see what you came up with.
+
+## Step 4: Fine-tune together
+
+Now the user listens. They'll come back with feedback like:
+- "Track 3 starts too late, there's a guitar intro you cut off"
+- "Tracks 5 and 6 are actually one song"
+- "There's a song between tracks 2 and 3 you missed"
+- "I want more crowd noise at the end of track 4"
+- "That's not Custom Concern, that's Trailer Trash"
+
+When they give feedback:
+1. Update `output/concert/splits.json` with the adjustments
+2. Re-run the split command to regenerate the tracks
+3. Let them know which tracks changed so they don't have to re-listen to everything
+
+Repeat this loop as many times as the user wants. This is the part that matters — getting the cuts to feel right is a matter of taste, not math. Defer to the user on what sounds good.
+
+## Notes
+
+- The user is the authority on the music. If they say a split point is wrong, it's wrong.
+- Err on the side of keeping more audio rather than less — it's easier to trim than to recover a cut intro.
+- Between-song banter and crowd noise can go either way. Some people want it, some don't. Ask on the first round, then remember their preference.
+- If a song bleeds into the next without a clear gap (common in live shows), ask the user where they'd like the cut rather than guessing.
