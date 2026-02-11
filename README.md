@@ -31,8 +31,8 @@ The key step is the human review. The transcript and energy analysis give you th
 
 ## Prerequisites
 
-- **Docker Desktop**
-- **NVIDIA GPU driver** (latest Windows version — Docker Desktop handles GPU passthrough)
+- **Docker Desktop** (GPU passthrough works out of the box)
+- **NVIDIA GPU driver** (you already have this if you have an NVIDIA GPU)
 
 That's it. Everything else runs inside the dev container.
 
@@ -41,6 +41,7 @@ That's it. Everything else runs inside the dev container.
 1. Open this folder in VS Code
 2. When prompted, **Reopen in Container** (or Ctrl+Shift+P → "Dev Containers: Reopen in Container")
 3. Wait for the container to build (first time includes ~3 GB whisper model download)
+4. Open a terminal in the container and run `claude` to authenticate Claude Code
 
 ## Usage
 
