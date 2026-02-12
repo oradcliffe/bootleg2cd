@@ -43,9 +43,9 @@ def analyze(input_file):
 @cli.command()
 @click.option("--input", "input_file", required=True, help="Path to source audio file")
 @click.option("--splits", required=True, help="Path to splits.json")
-@click.option("--artist", default=None, help="Artist name for ID3 tags")
-@click.option("--album", default=None, help="Album/show name for ID3 tags")
-@click.option("--year", default=None, type=int, help="Year for ID3 tags")
+@click.option("--artist", default=None, help="Artist name for metadata")
+@click.option("--album", default=None, help="Album/show name for metadata")
+@click.option("--year", default=None, type=int, help="Year for metadata")
 def split(input_file, splits, artist, album, year):
     """Split audio into individual tracks from a splits.json file."""
     split_tracks(input_file, splits, artist=artist, album=album, year=year)

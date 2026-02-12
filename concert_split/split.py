@@ -41,7 +41,7 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
     """Split an audio file into individual tracks based on splits.json.
 
     Each track is output as 16-bit 44.1kHz stereo WAV (CD-ready).
-    Metadata tags are applied using mutagen.
+    Metadata is written as INFO chunks (not ID3 — ID3 on WAV breaks players).
     """
     with open(splits_path) as f:
         splits = json.load(f)
@@ -70,27 +70,28 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
 
         click.echo(f"  [{num:02d}] {title}  ({format_seconds(start)} → {format_seconds(end)})")
 
-        # ffmpeg: extract segment as 16-bit 44.1kHz stereo WAV
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-y",
-                "-i", audio_path,
-                "-ss", format_seconds(start),
-                "-to", format_seconds(end),
-                "-acodec", "pcm_s16le",
-                "-ar", "44100",
-                "-ac", "2",
-                output_path,
-            ],
-            check=True,
-            capture_output=True,
-        )
+        # ffmpeg: extract segment as 16-bit 44.1kHz stereo WAV with INFO chunks
+        track_str = f"{num}/{len(tracks)}"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", audio_path,
+            "-ss", format_seconds(start),
+            "-to", format_seconds(end),
+            "-acodec", "pcm_s16le",
+            "-ar", "44100",
+            "-ac", "2",
+            "-metadata", f"title={title}",
+        ]
+        if meta_artist:
+            cmd += ["-metadata", f"artist={meta_artist}"]
+        if meta_album:
+            cmd += ["-metadata", f"album={meta_album}"]
+        if meta_year:
+            cmd += ["-metadata", f"date={meta_year}"]
+        cmd += ["-metadata", f"track={track_str}"]
+        cmd.append(output_path)
 
-        # Tag the file
-        tag_wav(output_path, title=title, artist=meta_artist,
-                album=meta_album, year=meta_year, track_num=num,
-                track_total=len(tracks))
+        subprocess.run(cmd, check=True, capture_output=True)
 
     # Generate CUE sheet for CD-Text support when burning
     cue_name = f"{meta_artist} - {meta_album}.cue" if meta_artist and meta_album else "concert.cue"
@@ -121,27 +122,3 @@ def write_cue_sheet(cue_path, tracks, artist=None, album=None):
             f.write(f"    INDEX 01 00:00:00\n")
 
 
-def tag_wav(path, title=None, artist=None, album=None, year=None,
-            track_num=None, track_total=None):
-    """Apply ID3 tags to a WAV file using mutagen."""
-    from mutagen.id3 import ID3, TIT2, TPE1, TALB, TRCK, TDRC
-    from mutagen.id3._util import ID3NoHeaderError
-
-    try:
-        tags = ID3(path)
-    except ID3NoHeaderError:
-        tags = ID3()
-
-    if title:
-        tags.add(TIT2(encoding=3, text=title))
-    if artist:
-        tags.add(TPE1(encoding=3, text=artist))
-    if album:
-        tags.add(TALB(encoding=3, text=album))
-    if track_num:
-        track_str = f"{track_num}/{track_total}" if track_total else str(track_num)
-        tags.add(TRCK(encoding=3, text=track_str))
-    if year:
-        tags.add(TDRC(encoding=3, text=str(year)))
-
-    tags.save(path)

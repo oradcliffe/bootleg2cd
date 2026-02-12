@@ -46,23 +46,7 @@ concert-split split \
   --year ...
 ```
 
-After splitting, strip the ID3 tags from the WAV files and re-add metadata as WAV INFO chunks (which are compatible with Windows Media Player). ID3 tags on WAV files break playback on WMP.
-
-```
-cd output/concert/tracks && for f in *.wav; do \
-  title=$(echo "$f" | sed 's/^[0-9]* - //;s/\.wav$//'); \
-  num=$(echo "$f" | grep -oP '^\d+'); \
-  total=<TRACK_COUNT>; \
-  tmpf="/tmp/meta_$(echo "$f" | tr ' ' '_')"; \
-  ffmpeg -y -i "$f" -c copy \
-    -metadata title="$title" \
-    -metadata artist="<ARTIST>" \
-    -metadata album="<ALBUM>" \
-    -metadata track="$num/$total" \
-    -metadata date="<YEAR>" \
-    "$tmpf" 2>/dev/null && mv "$tmpf" "$f"; \
-done
-```
+The split command handles WAV metadata automatically using INFO chunks (not ID3 — ID3 on WAV breaks players like Windows Media Player). No manual post-processing needed.
 
 Format the album tag as: "Venue City ST M-D-YY" (e.g. "Mercury Theatre Knoxville TN 9-9-97").
 
@@ -88,7 +72,7 @@ Repeat this loop as many times as the user wants. This is the part that matters 
 
 - The user is the authority on the music. If they say a split point is wrong, it's wrong.
 - Err on the side of keeping more audio rather than less — it's easier to trim than to recover a cut intro.
-- Between-song banter and crowd noise can go either way. Some people want it, some don't. Ask on the first round, then remember their preference.
+- Between-song banter and crowd noise go at the **end** of the preceding track, not the start of the next one. If track A ends and there's banter before track B starts, include that banter at the tail of track A so track B opens clean with music.
 - If a song bleeds into the next without a clear gap (common in live shows), ask the user where they'd like the cut rather than guessing.
 
 ### Reading the transcript

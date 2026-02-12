@@ -7,7 +7,6 @@ setup(
     install_requires=[
         "yt-dlp>=2024.1.0",
         "faster-whisper>=1.0.0",
-        "mutagen>=1.47.0",
         "click>=8.1.0",
     ],
     entry_points={
