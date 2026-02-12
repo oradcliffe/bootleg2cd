@@ -73,6 +73,7 @@ Repeat this loop as many times as the user wants. This is the part that matters 
 - The user is the authority on the music. If they say a split point is wrong, it's wrong.
 - Err on the side of keeping more audio rather than less — it's easier to trim than to recover a cut intro.
 - Between-song banter and crowd noise go at the **end** of the preceding track, not the start of the next one. If track A ends and there's banter before track B starts, include that banter at the tail of track A so track B opens clean with music.
+- That said, let the flavor come through — if there's a quick shout, count-in, or moment that naturally leads into the song, it's fine to leave it at the top of the track. Use your judgment; the goal is that tracks don't open with a minute of dead air, not that every track starts on the first note.
 - If a song bleeds into the next without a clear gap (common in live shows), ask the user where they'd like the cut rather than guessing.
 
 ### Reading the transcript

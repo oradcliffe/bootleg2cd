@@ -4,6 +4,26 @@ import subprocess
 import re
 import click
 
+FADE_DURATION = 0.15   # seconds — prevents clicks at cut points
+TARGET_LUFS = -16.0    # album-level loudness target
+
+
+def measure_loudness(audio_path):
+    """Measure integrated loudness of the source audio."""
+    result = subprocess.run(
+        ["ffmpeg", "-i", audio_path, "-af", "loudnorm=print_format=json",
+         "-f", "null", "-"],
+        capture_output=True, text=True,
+    )
+    # loudnorm outputs a JSON block at the end of stderr
+    stderr = result.stderr
+    json_start = stderr.rfind("{")
+    json_end = stderr.rfind("}") + 1
+    if json_start >= 0 and json_end > json_start:
+        data = json.loads(stderr[json_start:json_end])
+        return float(data["input_i"])
+    return None
+
 
 def parse_timestamp(ts):
     """Parse a timestamp string to seconds.
@@ -57,6 +77,16 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
     click.echo(f"Splitting {len(tracks)} tracks from: {audio_path}")
     click.echo(f"Output: {output_dir}")
 
+    # Album-level loudness normalization: measure once, apply same gain to all tracks
+    click.echo("Measuring loudness for album-level normalization...")
+    source_lufs = measure_loudness(audio_path)
+    gain_db = None
+    if source_lufs is not None:
+        gain_db = TARGET_LUFS - source_lufs
+        click.echo(f"  Source: {source_lufs:.1f} LUFS | Target: {TARGET_LUFS:.1f} LUFS | Gain: {gain_db:+.1f} dB")
+    else:
+        click.echo("  Warning: could not measure loudness, skipping normalization")
+
     for track in tracks:
         num = track["track"]
         title = track["title"]
@@ -70,13 +100,22 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
 
         click.echo(f"  [{num:02d}] {title}  ({format_seconds(start)} → {format_seconds(end)})")
 
-        # ffmpeg: extract segment as 16-bit 44.1kHz stereo WAV with INFO chunks
+        # Build audio filter chain: fades + album-level normalization
+        duration = end - start
+        filters = [f"afade=t=in:d={FADE_DURATION}"]
+        if duration > FADE_DURATION * 2:
+            fade_out_start = duration - FADE_DURATION
+            filters.append(f"afade=t=out:st={fade_out_start:.3f}:d={FADE_DURATION}")
+        if gain_db is not None and abs(gain_db) > 0.1:
+            filters.append(f"volume={gain_db:.1f}dB")
+
         track_str = f"{num}/{len(tracks)}"
         cmd = [
             "ffmpeg", "-y",
             "-i", audio_path,
             "-ss", format_seconds(start),
             "-to", format_seconds(end),
+            "-af", ",".join(filters),
             "-acodec", "pcm_s16le",
             "-ar", "44100",
             "-ac", "2",
