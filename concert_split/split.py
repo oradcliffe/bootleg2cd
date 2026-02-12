@@ -92,7 +92,33 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
                 album=meta_album, year=meta_year, track_num=num,
                 track_total=len(tracks))
 
+    # Generate CUE sheet for CD-Text support when burning
+    cue_name = f"{meta_artist} - {meta_album}.cue" if meta_artist and meta_album else "concert.cue"
+    cue_name = re.sub(r'[<>:"/\\|?*]', "", cue_name)
+    write_cue_sheet(os.path.join(output_dir, cue_name), tracks, meta_artist, meta_album)
+
     click.echo(f"\nDone! {len(tracks)} tracks saved to: {output_dir}")
+    click.echo(f"CUE sheet: {cue_name}")
+
+
+def write_cue_sheet(cue_path, tracks, artist=None, album=None):
+    """Write a CUE sheet for CD burning with CD-Text metadata."""
+    with open(cue_path, "w") as f:
+        if artist:
+            f.write(f'PERFORMER "{artist}"\n')
+        if album:
+            f.write(f'TITLE "{album}"\n')
+        for track in tracks:
+            num = track["track"]
+            title = track["title"]
+            safe_title = re.sub(r'[<>:"/\\|?*]', "", title)
+            filename = f"{num:02d} - {safe_title}.wav"
+            f.write(f'FILE "{filename}" WAVE\n')
+            f.write(f"  TRACK {num:02d} AUDIO\n")
+            f.write(f'    TITLE "{title}"\n')
+            if artist:
+                f.write(f'    PERFORMER "{artist}"\n')
+            f.write(f"    INDEX 01 00:00:00\n")
 
 
 def tag_wav(path, title=None, artist=None, album=None, year=None,
