@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     python3-pip \
     ffmpeg \
+    git \
     curl \
     ca-certificates \
     gnupg \

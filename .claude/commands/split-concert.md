@@ -24,9 +24,11 @@ Once transcription and analysis are done, read all three files:
 - `output/concert/energy.txt`
 - `output/concert/description.txt`
 
-Ask the user for any context that helps: Do they have a setlist? Know the artist/date/venue? If not, do your best from transcript lyrics and video description.
+Ask the user for any context that helps: Do they have a setlist? Know the artist/date/venue?
 
-Using the transcript, energy dips, and any setlist info, make your best guess at the full track list with split points. Write `output/concert/splits.json` and immediately run the split:
+Your primary source of truth is the transcript and energy data — the actual recording in front of you. Do your own analysis first: read the transcript carefully, match lyrics to songs, find the banter boundaries, and build your track list from what you can hear. Internet setlists (setlist.fm, fan sites, etc.) can be useful as a secondary reference for song names and ordering, but don't trust them over what the data shows — many posted setlists are wrong, partial, or from a different night on the same tour.
+
+Using the transcript, energy dips, and any setlist/internet research, make your best guess at the full track list with split points. Write `output/concert/splits.json` and immediately run the split:
 
 ```
 concert-split split \
@@ -61,3 +63,13 @@ Repeat this loop as many times as the user wants. This is the part that matters 
 - Err on the side of keeping more audio rather than less — it's easier to trim than to recover a cut intro.
 - Between-song banter and crowd noise can go either way. Some people want it, some don't. Ask on the first round, then remember their preference.
 - If a song bleeds into the next without a clear gap (common in live shows), ask the user where they'd like the cut rather than guessing.
+
+### Reading the transcript
+
+The Whisper transcript of a live bootleg will be **mostly wrong on exact words but right on cadence and sound**. Don't expect literal lyrics — expect phonetic approximations. For example, "Cowboy Dan goes to the reservation, drinks and gets mean" might come through as "goes to the red face and grins against me." The syllable count and vowel sounds are close even when the words are completely wrong.
+
+When identifying songs from the transcript:
+- Match by **sound and rhythm**, not exact text. Read the garbled lyrics out loud if it helps.
+- Look for **distinctive phrases** that survive the noise — song titles mentioned in banter, repeated choruses, unique words.
+- Banter between songs transcribes much more accurately than lyrics (clean speech vs. vocals over instruments). Use banter timestamps as reliable anchor points.
+- Whisper sometimes hallucinates generic filler during instrumental sections. If you see a stretch of vague, repetitive text that doesn't match any song, it's probably an instrumental break.

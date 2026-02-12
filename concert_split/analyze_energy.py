@@ -21,7 +21,7 @@ def analyze_energy(audio_path, output_dir):
         [
             "ffmpeg",
             "-i", audio_path,
-            "-af", "ebur128=peak=none:framelog=verbose",
+            "-af", "ebur128",
             "-f", "null",
             "-",
         ],
@@ -30,8 +30,8 @@ def analyze_energy(audio_path, output_dir):
     )
 
     # Parse the ebur128 output — look for momentary loudness values
-    # Format: "t: X.XXX    M: -XX.X S: -XX.X ..."
-    pattern = re.compile(r"t:\s*([\d.]+)\s+M:\s*(-?[\d.]+)")
+    # Format: "t: X.XXX    TARGET:-23 LUFS    M: -XX.X S: -XX.X ..."
+    pattern = re.compile(r"t:\s*([\d.]+)\s+.*?M:\s*(-?[\d.]+)")
     measurements = []
 
     for line in result.stderr.splitlines():

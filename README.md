@@ -2,7 +2,7 @@
 
 A CLI tool for splitting long bootleg concert recordings into individual tracks. Designed for messy, lively shows with no chapters — audience recordings, soundboard boots, whatever.
 
-Downloads audio from YouTube, transcribes everything (banter, lyrics, crowd noise) with timestamps, detects energy dips between songs, and outputs files for human + AI review. You decide where to cut, then the tool splits and tags CD-ready WAV files.
+Downloads audio from YouTube, transcribes vocals (banter + lyrics through the music) with timestamps, detects energy dips between songs, and outputs files for human + AI review. You decide where to cut, then the tool splits and tags CD-ready WAV files.
 
 ## How It Works
 
@@ -84,8 +84,9 @@ Each concert gets its own directory:
 ```
 output/my-show/
 ├── concert.flac        # downloaded audio (lossless)
+├── title.txt           # YouTube video title
 ├── description.txt     # YouTube video description
-├── transcript.txt      # timestamped transcription
+├── transcript.txt      # timestamped transcription (lyrics + banter)
 ├── energy.txt          # volume analysis + detected dips
 ├── splits.json         # track boundaries (you create this)
 └── tracks/
@@ -120,10 +121,20 @@ Timestamps can be in `MM:SS.mmm`, `H:MM:SS.mmm`, or just seconds.
 - Use `--model medium.en` for faster (but less accurate) transcription on longer recordings
 - Run `concert-split transcribe --device cpu` to force CPU if GPU isn't working
 
+## Reviewing Tracks on Windows
+
+The `output/` directory is inside the dev container, but Docker Desktop mounts your project folder both ways. The split tracks are at:
+
+```
+<your-repo-folder>\output\my-show\tracks\
+```
+
+Open that folder in Windows Explorer and play the WAV files with any audio player to verify your cuts before closing the session.
+
 ## Tech Stack
 
 - **yt-dlp** — YouTube download
-- **faster-whisper** — GPU-accelerated transcription (CTranslate2)
-- **ffmpeg** — audio extraction, analysis, splitting
+- **faster-whisper** — GPU-accelerated transcription (CTranslate2), tuned for live audio
+- **ffmpeg** — audio extraction, energy analysis, splitting
 - **mutagen** — ID3 metadata tagging
 - **NVIDIA CUDA 12.2** — GPU acceleration (in container)
