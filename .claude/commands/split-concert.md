@@ -9,13 +9,19 @@ Run the download command and wait for it to finish:
 concert-split download --url "$ARGUMENTS" --output output/concert
 ```
 
-## Step 2: Transcribe + Analyze (parallel)
+## Step 2: Transcribe + Analyze + YouTube Comments (parallel)
 
-Run both of these:
+Run all of these:
 ```
 concert-split transcribe --input output/concert/concert.flac
 concert-split analyze --input output/concert/concert.flac
 ```
+
+Also grab YouTube comments — they often contain track breakdowns, timestamps, and song IDs from fans:
+```
+yt-dlp --skip-download --write-info-json --write-comments -o "output/concert/comments" "$ARGUMENTS"
+```
+The comments will be in `output/concert/comments.info.json` under the `"comments"` key. Skim them for timestamps, track lists, or song identifications.
 
 ## Step 3: First-pass split
 
@@ -23,10 +29,11 @@ Once transcription and analysis are done, read all three files:
 - `output/concert/transcript.txt`
 - `output/concert/energy.txt`
 - `output/concert/description.txt`
+- `output/concert/comments.info.json` (skim the `"comments"` array for track info)
 
 Ask the user for any context that helps: Do they have a setlist? Know the artist/date/venue?
 
-Your primary source of truth is the transcript and energy data — the actual recording in front of you. Do your own analysis first: read the transcript carefully, match lyrics to songs, find the banter boundaries, and build your track list from what you can hear. Internet setlists (setlist.fm, fan sites, etc.) can be useful as a secondary reference for song names and ordering, but don't trust them over what the data shows — many posted setlists are wrong, partial, or from a different night on the same tour.
+Your primary source of truth is the transcript and energy data — the actual recording in front of you. Do your own analysis first: read the transcript carefully, match lyrics to songs, find the banter boundaries, and build your track list from what you can hear. Internet setlists (setlist.fm, fan sites, etc.) and YouTube comments can be useful as secondary references for song names and ordering, but don't trust them over what the data shows — many posted setlists are wrong, partial, or from a different night on the same tour.
 
 Using the transcript, energy dips, and any setlist/internet research, make your best guess at the full track list with split points. Write `output/concert/splits.json` and immediately run the split:
 
@@ -38,6 +45,26 @@ concert-split split \
   --album "..." \
   --year ...
 ```
+
+After splitting, strip the ID3 tags from the WAV files and re-add metadata as WAV INFO chunks (which are compatible with Windows Media Player). ID3 tags on WAV files break playback on WMP.
+
+```
+cd output/concert/tracks && for f in *.wav; do \
+  title=$(echo "$f" | sed 's/^[0-9]* - //;s/\.wav$//'); \
+  num=$(echo "$f" | grep -oP '^\d+'); \
+  total=<TRACK_COUNT>; \
+  tmpf="/tmp/meta_$(echo "$f" | tr ' ' '_')"; \
+  ffmpeg -y -i "$f" -c copy \
+    -metadata title="$title" \
+    -metadata artist="<ARTIST>" \
+    -metadata album="<ALBUM>" \
+    -metadata track="$num/$total" \
+    -metadata date="<YEAR>" \
+    "$tmpf" 2>/dev/null && mv "$tmpf" "$f"; \
+done
+```
+
+Format the album tag as: "Venue City ST M-D-YY" (e.g. "Mercury Theatre Knoxville TN 9-9-97").
 
 Tell the user the tracks are ready to listen to in `output/concert/tracks/`. Show them the track list with timestamps so they can see what you came up with.
 

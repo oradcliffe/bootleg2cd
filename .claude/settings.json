@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(concert-split:*)",
+      "Bash(yt-dlp:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(ffprobe:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(cd:*)",
+      "Bash(xargs:*)",
+      "Bash(git:*)",
+      "WebSearch",
+      "WebFetch"
+    ]
+  }
+}
