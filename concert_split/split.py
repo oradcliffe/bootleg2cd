@@ -112,9 +112,9 @@ def split_tracks(audio_path, splits_path, artist=None, album=None, year=None):
         track_str = f"{num}/{len(tracks)}"
         cmd = [
             "ffmpeg", "-y",
-            "-i", audio_path,
             "-ss", format_seconds(start),
-            "-to", format_seconds(end),
+            "-i", audio_path,
+            "-t", format_seconds(duration),
             "-af", ",".join(filters),
             "-acodec", "pcm_s16le",
             "-ar", "44100",

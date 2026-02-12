@@ -9,19 +9,15 @@ Run the download command and wait for it to finish:
 concert-split download --url "$ARGUMENTS" --output output/concert
 ```
 
-## Step 2: Transcribe + Analyze + YouTube Comments (parallel)
+## Step 2: Transcribe + Analyze (parallel)
 
-Run all of these:
+Run both of these:
 ```
 concert-split transcribe --input output/concert/concert.flac
 concert-split analyze --input output/concert/concert.flac
 ```
 
-Also grab YouTube comments — they often contain track breakdowns, timestamps, and song IDs from fans:
-```
-yt-dlp --skip-download --write-info-json --write-comments -o "output/concert/comments" "$ARGUMENTS"
-```
-The comments will be in `output/concert/comments.info.json` under the `"comments"` key. Skim them for timestamps, track lists, or song identifications.
+The download step already grabbed YouTube comments. They'll be in `output/concert/comments.info.json` under the `"comments"` key.
 
 ## Step 3: First-pass split
 
