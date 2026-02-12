@@ -13,7 +13,9 @@
       "Bash(awk:*)",
       "Bash(git:*)",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "Edit",
+      "Write"
     ]
   }
 }
