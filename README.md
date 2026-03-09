@@ -1,5 +1,7 @@
 # Concert Splitter
 
+<img src="images/concert.jpg" alt="Live concert" width="600">
+
 Split bootleg concert recordings from YouTube into tagged, CD-ready WAV tracks — using Claude Code to do the heavy lifting.
 
 ## Prerequisites
