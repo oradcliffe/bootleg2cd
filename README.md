@@ -65,3 +65,7 @@ Claude Code asks for approval before running shell commands. To keep the process
 ## How it works
 
 The `/split-concert` command is a [Claude Code custom slash command](https://docs.anthropic.com/en/docs/claude-code/tutorials#create-custom-slash-commands). The full prompt — including how Claude reads transcripts, picks split points, handles banter, and formats metadata — lives in [`.claude/commands/split-concert.md`](.claude/commands/split-concert.md). Read it if you want to understand the process, tweak the defaults, or change how Claude approaches the task.
+
+## Disclaimer
+
+This tool is intended for personal use with content you have the right to download. Users are responsible for complying with applicable laws and platform terms of service.
