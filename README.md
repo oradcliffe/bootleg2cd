@@ -1,140 +1,67 @@
 # Concert Splitter
 
-A CLI tool for splitting long bootleg concert recordings into individual tracks. Designed for messy, lively shows with no chapters — audience recordings, soundboard boots, whatever.
-
-Downloads audio from YouTube, transcribes vocals (banter + lyrics through the music) with timestamps, detects energy dips between songs, and outputs files for human + AI review. You decide where to cut, then the tool splits and tags CD-ready WAV files.
-
-## How It Works
-
-```
-YouTube URL
-     │
-     ▼
-  yt-dlp          →  concert.flac (best quality audio)
-     │
-     ├──────────────────────┐
-     ▼                      ▼
-  Whisper (GPU)         ffmpeg energy analysis
-     │                      │
-     ▼                      ▼
-  transcript.txt        energy.txt
-     │                      │
-     └──────┬───────────────┘
-            ▼
-   You + Claude Code     →  splits.json (track boundaries)
-            │
-            ▼
-   ffmpeg split + tag    →  01 - Song.wav, 02 - Song.wav, ...
-```
-
-The key step is the human review. The transcript and energy analysis give you the signal — you and Claude Code figure out the actual cut points.
+Split bootleg concert recordings from YouTube into tagged, CD-ready WAV tracks — using Claude Code to do the heavy lifting.
 
 ## Prerequisites
 
-- **Docker Desktop** (GPU passthrough works out of the box)
+- **Docker Desktop** with GPU passthrough
 - **NVIDIA GPU driver** (you already have this if you have an NVIDIA GPU)
+- **Claude Code** installed and authenticated
 
-That's it. Everything else runs inside the dev container.
-
-## Getting Started
+## Setup
 
 1. Open this folder in VS Code
-2. When prompted, **Reopen in Container** (or Ctrl+Shift+P → "Dev Containers: Reopen in Container")
-3. Wait for the container to build (first time includes ~3 GB whisper model download)
-4. Open a terminal in the container and run `claude` to authenticate Claude Code
+2. **Reopen in Container** when prompted (or Ctrl+Shift+P → "Dev Containers: Reopen in Container")
+3. Wait for the container to build — first time includes a ~3 GB model download
 
 ## Usage
 
-### Full pipeline (download + transcribe + analyze)
-
-```bash
-concert-split run \
-  --url "https://youtube.com/watch?v=..." \
-  --output output/my-show
-```
-
-### Step-by-step
-
-```bash
-# 1. Download best-quality audio
-concert-split download --url "https://youtube.com/watch?v=..." --output output/my-show/
-
-# 2. Transcribe with Whisper (runs on GPU)
-concert-split transcribe --input output/my-show/concert.flac
-
-# 3. Analyze energy levels
-concert-split analyze --input output/my-show/concert.flac
-
-# 4. Review transcript.txt and energy.txt
-#    Create splits.json (manually or with Claude Code)
-
-# 5. Split into tracks
-concert-split split \
-  --input output/my-show/concert.flac \
-  --splits output/my-show/splits.json \
-  --artist "Band Name" \
-  --album "Venue, City — Date" \
-  --year 1997
-```
-
-## Output Structure
-
-Each concert gets its own directory:
+Open a terminal in the container and run:
 
 ```
-output/my-show/
-├── concert.flac        # downloaded audio (lossless)
-├── title.txt           # YouTube video title
-├── description.txt     # YouTube video description
-├── transcript.txt      # timestamped transcription (lyrics + banter)
-├── energy.txt          # volume analysis + detected dips
-├── splits.json         # track boundaries (you create this)
+claude
+```
+
+Then type:
+
+```
+/split-concert https://youtube.com/watch?v=...
+```
+
+Claude will download the audio, transcribe it, analyze energy levels, and produce a first-pass set of split tracks. This takes a few minutes depending on the length of the recording.
+
+When it's done, you'll get a track list with timestamps and a folder of WAV files at `output/concert/tracks/`. Listen to them — on Windows, the files are at `<this-repo>\output\concert\tracks\` in Explorer.
+
+Tell Claude what to fix:
+
+- "Track 3 starts too late, you cut off the guitar intro"
+- "Tracks 5 and 6 are actually one song"
+- "There's a song between 2 and 3 you missed"
+- "That's not Custom Concern, that's Trailer Trash"
+
+Claude will update the splits and regenerate only the affected tracks. Repeat until it sounds right.
+
+## Output
+
+```
+output/concert/
+├── concert.flac           # source audio (lossless)
+├── transcript.txt         # timestamped transcription
+├── energy.txt             # volume analysis + detected dips
+├── splits.json            # track boundaries
+├── Artist - Album.cue     # CUE sheet for CD burning
 └── tracks/
     ├── 01 - Song Name.wav
     ├── 02 - Song Name.wav
     └── ...
 ```
 
-Track files are **16-bit, 44.1kHz, stereo WAV** — Red Book CD standard, ready to burn.
+Tracks are **16-bit, 44.1kHz, stereo WAV** — Red Book CD standard, ready to burn. You also get a CUE sheet with embedded CD-Text, so if you burn the disc with software that supports it (ImgBurn, CDBurnerXP, etc.), your CD player will display the artist, album, and track titles.
 
-## splits.json Format
+## Permissions
 
-```json
-{
-  "artist": "Band Name",
-  "date": "1997-09-09",
-  "venue": "Venue, City, ST",
-  "tracks": [
-    {"track": 1, "title": "Song Name", "start": "0:00.000", "end": "3:22.500"},
-    {"track": 2, "title": "Another Song", "start": "3:22.500", "end": "7:45.000"}
-  ]
-}
-```
+Claude Code asks for approval before running shell commands. To keep the process hands-off, the repo ships with [`.claude/settings.json`](.claude/settings.json) which pre-approves the commands Claude needs (`concert-split`, `yt-dlp`, `ffmpeg`, etc.). Review that file before your first run — if you're comfortable with the whitelist, Claude will handle the entire pipeline without prompting you for permission.
 
-Timestamps can be in `MM:SS.mmm`, `H:MM:SS.mmm`, or just seconds.
+## How it works
 
-## Tips
-
-- **setlist.fm** is great for finding setlists to cross-reference against the transcript
-- The energy dips are a starting point — live concerts often have very short gaps, so trust the transcript more
-- If a setlist isn't available, Claude Code can often identify songs from transcribed lyrics
-- Use `--model medium.en` for faster (but less accurate) transcription on longer recordings
-- Run `concert-split transcribe --device cpu` to force CPU if GPU isn't working
-
-## Reviewing Tracks on Windows
-
-The `output/` directory is inside the dev container, but Docker Desktop mounts your project folder both ways. The split tracks are at:
-
-```
-<your-repo-folder>\output\my-show\tracks\
-```
-
-Open that folder in Windows Explorer and play the WAV files with any audio player to verify your cuts before closing the session.
-
-## Tech Stack
-
-- **yt-dlp** — YouTube download
-- **faster-whisper** — GPU-accelerated transcription (CTranslate2), tuned for live audio
-- **ffmpeg** — audio extraction, energy analysis, splitting
-- **mutagen** — ID3 metadata tagging
-- **NVIDIA CUDA 12.2** — GPU acceleration (in container)
+The `/split-concert` command is a [Claude Code custom slash command](https://docs.anthropic.com/en/docs/claude-code/tutorials#create-custom-slash-commands). The full prompt — including how Claude reads transcripts, picks split points, handles banter, and formats metadata — lives in [`.claude/commands/split-concert.md`](.claude/commands/split-concert.md). Read it if you want to understand the process, tweak the defaults, or change how Claude approaches the task.
